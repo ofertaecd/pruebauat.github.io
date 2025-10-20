@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario Vocacional UAT</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    #encabezado {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      z-index: 999;
+      padding: 10px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: top 0.3s;
+    }
+    .logo-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 1000px;
+      margin: auto;
+      flex-wrap: wrap;
+    }
+    .logo-container img {
+      height: 100px;
+      object-fit: contain;
+      margin: 5px;
+    }
+    @media (max-width: 600px) {
+      .logo-container img {
+        height: 35px;
+      }
+    }
+    .container {
+      margin-top: 120px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #bc4700;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .field-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .field-row.nombre-sexo > div:first-child {
+      flex: 2;
+    }
+    .field-row.nombre-sexo > div:last-child {
+      flex: 1;
+    }
+    .field-row.telefono-escuela > div:first-child {
+      flex: 1;
+    }
+    .field-row.telefono-escuela > div:last-child {
+      flex: 2;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    #preguntas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .pregunta button {
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      background-color: #ffd9c0;
+      color: #bc4700;
+      border: 2px solid #bc4700;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      min-height: 100px;
+      font-size: 1.05rem;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .pregunta button.seleccionado {
+      background-color: #bc4700;
+      color: white;
+    }
+    button[type="submit"], #descargarCSV {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #00467F;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .resultado {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e0f7fa;
+      border-radius: 8px;
+      display: none;
+    }
+    #graficaContainer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header id="encabezado">
+  <div class="logo-container">
+    <img src="logo01.png" alt="Logo 1">
+    <img src="logo02.png" alt="Logo 2">
+    <img src="logo03.png" alt="Logo 3">
+    <img src="logo04.png" alt="Logo 4">
+  </div>
+</header>
+
+<div class="container">
+  <h1>Prueba de Orientación Vocacional CHASIDE</h1>
+  <form id="formulario">
+    <div class="field-row nombre-sexo">
+      <div>
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" required>
+      </div>
+      <div>
+        <label for="sexo">Sexo:</label>
+        <select id="sexo" name="sexo" required>
+          <option value="">Seleccione</option>
+          <option value="Femenino">Femenino</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label for="edad">Edad:</label>
+      <input type="number" id="edad" name="edad" required min="10" max="99">
+    </div>
+    <div class="field-row telefono-escuela">
+      <div>
+        <label for="telefono">Teléfono:</label>
+        <input type="tel" id="telefono" name="telefono" required>
+      </div>
+      <div>
+        <label for="escuela">Escuela de procedencia:</label>
+        <input type="text" id="escuela" name="escuela" required>
+      </div>
+    </div>
+    <p style="margin-top:20px; font-weight:bold; color:#ec8703;">
+      Selecciona la opción que más se acerque a tus preferencias.<br>
+      <span style="color:#bc4700;">Dale click en cada afirmación que te identifique.</span>
+    </p>
+    <div id="preguntas"></div>
+    <button type="submit">Enviar</button>
+    <a id="descargarCSV" style="display: none;">Descargar respuestas</a>
+  </form>
+  <div class="resultado" id="resultado">
+    <h2>¡Gracias por participar!</h2>
+    <p id="recomendacionTexto">Tu información ha sido registrada. Muy pronto recibirás una recomendación vocacional basada en tus intereses.</p>
+    <div id="graficaContainer">
+      <canvas id="graficaPastel"></canvas>
+    </div>
+    <button id="volverBtn" style="margin-top:15px;">Volver a responder</button>
+  </div>
+</div>
+
+<script>
+const preguntas = [
+  "Me interesa el comercio entre países",
+  "Me llama la atención la tecnología",
+  "Me preocupan la nutrición y la alimentación",
+  "Soy bueno con los números y hago cálculos rápido",
+  "Me interesan los fenómenos naturales",
+  "Insisto en resolver problemas matemáticos hasta lograrlo",
+  "Me gustaría crear programas y planes de estudio",
+  "Me atrae identificar notas y acordes musicales",
+  "Me interesa cómo se controla el crimen en la sociedad",
+  "Creo que la salud mental es importante",
+  "Soy quien arregla cosas cuando se descomponen",
+  "Me gustaría trabajar en un laboratorio mientras estudio",
+  "Me interesaría supervisar obras de construcción",
+  "Suelo estar informado sobre noticias actuales",
+  "Me gustaría ser gerente de una gran empresa",
+  "Me gustaría tocar en una banda o grupo musical",
+  "Me gusta desarmar aparatos para ver cómo funcionan",
+  "Me interesan los temas de impuestos y leyes contables",
+  "Podría revisar la garganta de alguien sin incomodarme",
+  "Me interesa estudiar la constitución de mi país",
+  "Me interesa el desarrollo de los niños",
+  "Trabajaría en recursos humanos para pagar mis estudios",
+  "Me importa la salud de los animales",
+  "Disfruto hacer experimentos con sustancias",
+  "Me gustaría ayudar a mejorar la vida de los adultos mayores",
+  "Soy curioso y me gustan las ciencias y matemáticas",
+  "Me gustaría analizar textos históricos",
+  "Me interesa usar herramientas de diseño impreso o digital"
+];
+
+const respuestas = {};
+// Recuperar registros previos de LocalStorage
+const registros = JSON.parse(localStorage.getItem("registrosVocacionales") || "[]");
+
+function guardarRegistro(registro) {
+  registros.push(registro);
+  localStorage.setItem("registrosVocacionales", JSON.stringify(registros));
+}
+
+function generarPreguntas() {
+  const contenedor = document.getElementById("preguntas");
+  preguntas.forEach((texto, index) => {
+    const div = document.createElement("div");
+    div.className = "pregunta";
+    div.innerHTML = `<button type="button" onclick="toggleSeleccionado(this, ${index})">${texto}</button>`;
+    contenedor.appendChild(div);
+  });
+}
+
+function toggleSeleccionado(boton, id) {
+  const clave = "pregunta" + (id + 1);
+  const seleccionado = boton.classList.toggle("seleccionado");
+  respuestas[clave] = seleccionado ? "sí" : "no";
+}
+
+generarPreguntas();
+
+const perfiles = [
+  {
+    nombre: "Ciencias Sociales",
+    preguntas: [4,15,18,22],
+    descripcion: `Intereses: Organizativo, Supervisión, Orden, Análisis y síntesis; Colaboración, Calculo, Persuasivo, Objetivo, Practico, Tolerante, Responsable, Liderazgo y Perspectiva activa.<br>
+    <b>Perfil:</b> Contador Público, Licenciado en Administración, Licenciado en Comercio Exterior, Licenciado en Comercialización, Licenciado en Autotransporte de Carga, Licenciado en Economía, Licenciado en Negocios Internacionales, Licenciado en Mercadotecnia y Administración, Licenciado en Economía y Desarrollo Sustentable, Ingeniero en Negocios, Licenciado en Economía y Finanzas (nueva), Licenciado en Turismo, Licenciado en Gestión y Desarrollo Turístico.`
+  },
+  {
+    nombre: "Humanidades y Ciencias de la Conducta",
+    preguntas: [10,21,7,27],
+    descripcion: `Intereses: Precisión Verbal, Organización, Relación de Hechos, Lingüística, Orden, Justicia, El Hombre, Analítico, Responsable, Justo, Conciliador, Sagaz.<br>
+    <b>Perfil:</b> Licenciado en Educación y Tecnologías para el Aprendizaje, Licenciado en Tecnología Educativa, Licenciado en Lingüística Aplicada, Licenciado en Ciencias de la Educación, Licenciado en Historia y Gestión del Patrimonio Cultural, Licenciado en Atención al Desarrollo y Bienestar Infantil, Licenciado en Idioma Inglés. Ciencias Sociales: Licenciado en Sociología, Licenciado en Trabajo Social, Contador Público y Finanzas (nueva)`
+  },
+  {
+    nombre: "Arte y Diseño",
+    preguntas: [13,28,16,8],
+    descripcion: `Intereses: Estético, Armónico, Manual, Visual, Auditivo, Observación y Análisis, Sensoperceptivo, Sensible, Imaginativo, Creativo, Detallista, Innovador.<br>
+    <b>Perfil:</b> Arquitecto, Licenciado en Diseño Gráfico, Licenciado en Arquitecto de Interiores y Habitabilidad, Licenciado en Diseño Gráfico y Animación Digital, Licenciado en Educación Artística, Licenciado en Música, Técnico Superior Universitario en Música.`
+  },
+  {
+    nombre: "Medicina y Ciencias de la Salud",
+    preguntas: [25,19,3,23],
+    descripcion: `Intereses: Asistir, Investigativo, Percepción, Sensoperceptivo, Analítico, Ayudar, Curar, Rehabilitar, Altruista, Solidario, Paciente, Comprensivo, Respetuoso.<br>
+    <b>Perfil:</b> Licenciado en Psicología, Licenciado en Enfermería, Médico Cirujano, Licenciado en Nutrición, Licenciado en Nutrición y Salud Integral, Médico Cirujano Dentista, Técnico Superior Universitario Laboratorista en Prótesis Dental, Ingeniería Biomédica (nueva), Atención Profesional de la Salud (nueva), Ciencias Aplicadas al Deporte y el Ejercicio (nueva).<br>
+    Ciencias Sociales: Lic. en Seguridad, Salud y Medio Ambiente.<br>
+    Ciencias Agropecuarias y Biotecnología: Médico Veterinario Zootecnista.<br>
+    Biología y Química: Licenciado en Nutrición y Ciencia de los Alimentos, Químico Farmacéutico Biólogo.`
+  },
+  {
+    nombre: "Ingeniería y Tecnología / Biología y Química",
+    preguntas: [2,6,11,17],
+    descripcion: `Intereses: Cálculo, Científico, Manual, Exacto, Planificar, Organizar, Controlar, Preciso, Practico, Crítico, Analítico.<br>
+    <b>Perfil:</b> Biología y Química: Ingeniero en Ciencias Ambientales.<br>
+    Ingeniería y Tecnología: Licenciado en Tecnologías de la Información, Ingeniero Industrial, Ingeniero Químico, Ingeniero Ambiental y en Seguridad, Ingeniero en Electrónica, Ingeniero en Sistemas Computacionales, Ingeniero en Sistemas de Producción, Ingeniero Petrolero, Ingeniero en Energías Renovables, Ingeniero en Mantenimiento Industrial, Ingeniero en Telemática, Ingeniero Bioquímico Industrial, Ingeniero Civil, Ingeniero Industrial y de Sistemas, Ingeniero en Ciencias Ambientales, Ingeniero en Ciencia de Datos, Ingeniero en Desarrollo Sostenible (nueva), Ingeniero en Ciencia de Datos y Inteligencia Artificial (nueva).<br>
+    Ciencias Sociales: Ingeniero en Negocios.`
+  },
+  {
+    nombre: "Ciencias Sociales (Justicia y Liderazgo)",
+    preguntas: [9,14,20,1],
+    descripcion: `Intereses: Justicia, Equidad, Colaboración, Espíritu de Equipo, Liderazgo, Coordinación, Destreza Física, Arriesgado, Valiente, Agresivo.<br>
+    <b>Perfil:</b> Licenciado en Derecho, Licenciado en Negocios Internacionales, Lic. en Seguridad, Salud y Medio Ambiente, Licenciado en Ciencias de la Comunicación, Licenciado en Criminología.`
+  },
+  {
+    nombre: "Ciencias Agropecuarias y Biotecnología / Físico-Matemáticas y Ciencias de la Tierra / Ingeniería y Tecnología",
+    preguntas: [12,24,5,26],
+    descripcion: `Intereses: Clasificar, Numérico, Análisis y Síntesis, Organización, Orden, Investigación, Precisión, Exacto.<br>
+    <b>Perfil:</b> Ciencias Agropecuarias y Biotecnología: Ingeniero Agrónomo, Licenciado en Producción Agropecuaria y Sustentable.<br>
+    Físico-Matemáticas y Ciencias de la Tierra: Ingeniero en Ciencias Ambientales.<br>
+    Ciencias Sociales: Lic. en Seguridad, Salud y Medio Ambiente.<br>
+    Ingeniería y Tecnología: Ingeniero Ambiental y en Seguridad, Ingeniero en Energías Renovables, Ingeniero en Ciencias Ambientales.`
+  }
+];
+
+// Estadísticas y gráfico
+function obtenerEstadisticas() {
+  let hombres = 0, mujeres = 0, otros = 0;
+  const areas = {};
+  registros.forEach(reg => {
+    if (reg.sexo === "Masculino") hombres++;
+    else if (reg.sexo === "Femenino") mujeres++;
+    else otros++;
+    // Extraer área del perfil
+    const area = reg.recomendacion.split(" ")[2] || "Sin área";
+    areas[area] = (areas[area] || 0) + 1;
+  });
+  // Área con mayor impacto
+  let areaMax = "Sin área", max = 0;
+  Object.entries(areas).forEach(([k, v]) => { if (v > max) { max = v; areaMax = k; } });
+  return { total: registros.length, hombres, mujeres, otros, areaMax, areas };
+}
+
+function mostrarGrafico() {
+  const stats = obtenerEstadisticas();
+  const ctx = document.getElementById("graficaPastel").getContext("2d");
+  if (window.graficoPastel) window.graficoPastel.destroy();
+  window.graficoPastel = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(stats.areas),
+      datasets: [{
+        data: Object.values(stats.areas),
+        backgroundColor: [
+          "#bc4700", "#ffd9c0", "#00467F", "#e0f7fa", "#ffb347", "#b0e0e6", "#c0c0c0"
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Áreas de especialidad más seleccionadas'
+        }
+      }
+    }
+  });
+  // Mostrar resumen
+  document.getElementById("graficaContainer").innerHTML =
+    `<canvas id="graficaPastel"></canvas>
+    <div style="margin-top:15px;">
+      <b>Total de respuestas:</b> ${stats.total}<br>
+      <b>Hombres:</b> ${stats.hombres} &nbsp; <b>Mujeres:</b> ${stats.mujeres} &nbsp; <b>Otro:</b> ${stats.otros}<br>
+      <b>Área más popular:</b> ${stats.areaMax}
+    </div>`;
+  // Redibujar gráfico
+  setTimeout(() => {
+    const ctx2 = document.getElementById("graficaPastel").getContext("2d");
+    window.graficoPastel = new Chart(ctx2, window.graficoPastel.config);
+  }, 100);
+}
+
+// Evaluación al enviar
+document.getElementById("formulario").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  let sugerencia = "No se detectó un área predominante. ¡Sigue explorando tus intereses!";
+  for (const perfil of perfiles) {
+    let count = 0;
+    for (const idx of perfil.preguntas) {
+      if (respuestas["pregunta" + idx] === "sí") count++;
+    }
+    if (count >= 4) {
+      sugerencia = `<b>Tu perfil es:</b> ${perfil.nombre}<br>${perfil.descripcion}`;
+      break;
+    }
+  }
+
+  // Guardar datos del usuario y sus respuestas
+  const nombre = document.getElementById("nombre").value;
+  const sexo = document.getElementById("sexo").value;
+  const edad = document.getElementById("edad").value;
+  const telefono = document.getElementById("telefono").value;
+  const escuela = document.getElementById("escuela").value;
+  const respuestasUsuario = preguntas.map((_, i) => respuestas["pregunta" + (i + 1)] || "no");
+  guardarRegistro({
+    nombre,
+    sexo,
+    edad,
+    telefono,
+    escuela,
+    respuestas: respuestasUsuario,
+    recomendacion: sugerencia.replace(/<br>/g, " ").replace(/<[^>]+>/g, "")
+  });
+
+  document.getElementById("resultado").style.display = "block";
+  document.getElementById("recomendacionTexto").innerHTML = sugerencia;
+  document.getElementById("descargarCSV").style.display = "inline-block";
+  document.getElementById("descargarCSV").onclick = descargarCSV;
+  mostrarGrafico();
+  window.scrollTo({top: document.getElementById("resultado").offsetTop, behavior: "smooth"});
+});
+
+// Función para descargar el archivo CSV
+function descargarCSV() {
+  if (registros.length === 0) return alert("No hay registros para descargar.");
+  const encabezados = ["Nombre", "Sexo", "Edad", "Teléfono", "Escuela"]
+    .concat(preguntas.map((_, i) => "Pregunta " + (i + 1)))
+    .concat(["Recomendación"]);
+  const filas = registros.map(reg =>
+    [reg.nombre, reg.sexo, reg.edad, reg.telefono, reg.escuela]
+      .concat(reg.respuestas)
+      .concat([reg.recomendacion])
+      .map(val => `"${val.replace(/"/g, '""')}"`)
+      .join(",")
+  );
+  const csv = encabezados.join(",") + "\n" + filas.join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "respuestas_vocacionales.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mostrarGrafico();
+}
+
+document.getElementById("volverBtn").onclick = function() {
+  document.getElementById("formulario").reset();
+  document.getElementById("resultado").style.display = "none";
+  document.getElementById("descargarCSV").style.display = "none";
+  document.getElementById("graficaContainer").innerHTML = '<canvas id="graficaPastel"></canvas>';
+  // Quitar selección de botones
+  document.querySelectorAll(".pregunta button").forEach(btn => btn.classList.remove("seleccionado"));
+  // Limpiar respuestas
+  Object.keys(respuestas).forEach(k => delete respuestas[k]);
+  window.scrollTo({top: 0, behavior: "smooth"});
+};
+</script>
+</body>
+</html>
