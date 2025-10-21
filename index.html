@@ -408,9 +408,13 @@ function mostrarGrafico() {
 }
 
 // Evaluación al enviar
-document.getElementById("formulario").addEventListener("submit", function(e) {
+document.getElementById("formulario").addEventListener("submit", async function(e) {
   e.preventDefault();
+  const botonEnviar = e.target.querySelector('button[type="submit"]');
+  botonEnviar.disabled = true;
+  botonEnviar.textContent = "Enviando...";
 
+  // 1. CÁLCULO DE LA RECOMENDACIÓN (esto es de tu código original)
   let sugerencia = "No se detectó un área predominante. ¡Sigue explorando tus intereses!";
   for (const perfil of perfiles) {
     let count = 0;
@@ -423,28 +427,60 @@ document.getElementById("formulario").addEventListener("submit", function(e) {
     }
   }
 
-  // Guardar datos del usuario y sus respuestas
-  const nombre = document.getElementById("nombre").value;
-  const sexo = document.getElementById("sexo").value;
-  const edad = document.getElementById("edad").value;
-  const telefono = document.getElementById("telefono").value;
-  const escuela = document.getElementById("escuela").value;
-  const respuestasUsuario = preguntas.map((_, i) => respuestas["pregunta" + (i + 1)] || "no");
-  guardarRegistro({
-    nombre,
-    sexo,
-    edad,
-    telefono,
-    escuela,
-    respuestas: respuestasUsuario,
-    recomendacion: sugerencia.replace(/<br>/g, " ").replace(/<[^>]+>/g, "")
-  });
+  // 2. RECOPILACIÓN DE TODOS LOS DATOS PARA ENVIAR
+  const datosParaEnviar = {
+    nombre: document.getElementById("nombre").value,
+    sexo: document.getElementById("sexo").value,
+    edad: document.getElementById("edad").value,
+    telefono: document.getElementById("telefono").value,
+    escuela: document.getElementById("escuela").value,
+    respuestas: preguntas.map((_, i) => respuestas["pregunta" + (i + 1)] || "no"),
+    preguntasKeys: preguntas.map((_, i) => "Pregunta " + (i + 1)), // Para los encabezados del CSV
+    recomendacion: sugerencia.replace(/<br>/g, " ").replace(/<[^>]+>/g, "") // Sin HTML
+  };
 
+  // Guardar en LocalStorage (como lo hacías antes, es opcional pero bueno tenerlo)
+  guardarRegistro(datosParaEnviar);
+
+  // 3. ENVÍO DE DATOS A GOOGLE APPS SCRIPT
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXeWU2DOGz2YofqjuD6h7gU9DOt47h_XHVzTdi8tA3xoAKLPd3dYoYPqdAWytqWLlF/exec"; // <-- ¡PEGA TU URL AQUÍ!
+
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      headers: {
+        //'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      // Esto es una redirección que Apps Script maneja, es necesario
+      redirect: 'follow', 
+      body: JSON.stringify(datosParaEnviar)
+    });
+
+    const result = await response.json();
+    
+    if (result.status === 'success') {
+      alert("¡Gracias! Tus respuestas han sido enviadas correctamente.");
+    } else {
+      // Si el script de Google da un error, lo mostramos
+      throw new Error(result.message);
+    }
+
+  } catch (error) {
+    console.error("Error al enviar los datos:", error);
+    alert("Hubo un error al enviar tus respuestas. Por favor, inténtalo de nuevo.\nDetalle: " + error.message);
+  } finally {
+     botonEnviar.disabled = false;
+     botonEnviar.textContent = "Enviar";
+  }
+
+  // 4. MOSTRAR RESULTADOS EN PANTALLA (esto es de tu código original)
   document.getElementById("resultado").style.display = "block";
   document.getElementById("recomendacionTexto").innerHTML = sugerencia;
   document.getElementById("descargarCSV").style.display = "inline-block";
   document.getElementById("descargarCSV").onclick = descargarCSV;
-  //mostrarGrafico(); quitar as diagonales para activar
   window.scrollTo({top: document.getElementById("resultado").offsetTop, behavior: "smooth"});
 });
 
